@@ -1,26 +1,8 @@
 > 📜 other templates available at https://github.com/SkyrimScripting/SKSE_Templates
 
-# SKSE "Hello, world!"
+# Network Client Util
 
-Very simple C++ SKSE plugin for Skyrim!
-
----
-
-- [SKSE "Hello, world!"](#skse-hello-world)
-- [What does it do?](#what-does-it-do)
-- [CommonLibSSE NG](#commonlibsse-ng)
-- [Requirements](#requirements)
-  - [Opening the project](#opening-the-project)
-- [Project setup](#project-setup)
-  - [Finding Your "`mods`" Folder](#finding-your-mods-folder)
-- [Setup your own repository](#setup-your-own-repository)
-- [Sharing is Caring](#sharing-is-caring)
-
-# What does it do?
-
-After running Skyrim, once at the Main Menu, press the `~` key to open the game console.
-
-You will see that we printed `"Hello, world!"` to the console at the Main Menu 🐉
+This adds an HTTP Client and WebSocket Clients to Skyrim and exposes their commands to Papyrus.
 
 # CommonLibSSE NG
 
