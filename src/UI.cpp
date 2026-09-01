@@ -3,6 +3,7 @@
 #include "logger.h";
 #include "SimpleIni.h"
 #include "SKSEMenuFramework.h"
+#include "translation.h"
 
 void SaveHttpClientSettings() {
     CSimpleIniA ini;
@@ -20,7 +21,7 @@ void SaveHttpClientSettings() {
 
 void __stdcall UI::Render() {
     httpEnabled = g_httpClientEnabled.load(std::memory_order_relaxed);
-    if (ImGuiMCP::Checkbox("Enable HTTP Client", &httpEnabled)) {
+    if (ImGuiMCP::Checkbox((g_translations.Get("EnableHttpClient") + "##NetworkClientUtil").c_str(), &httpEnabled)) {
         g_httpClientEnabled.store(httpEnabled, std::memory_order_relaxed);
         SaveHttpClientSettings();
     }
@@ -28,19 +29,20 @@ void __stdcall UI::Render() {
     ImGuiMCP::SameLine();
 
     httpLogging = g_httpLoggingEnabled.load(std::memory_order_relaxed);
-    if (ImGuiMCP::Checkbox("Enable HTTP Logging", &httpLogging)) {
+
+    if (ImGuiMCP::Checkbox((g_translations.Get("EnableHttpLogging") + "##NetworkClientUtil").c_str(), &httpLogging)) {
         g_httpLoggingEnabled.store(httpLogging, std::memory_order_relaxed);
     }
 
     ImGuiMCP::Separator();
 
     wsEnabled = g_websocketClientEnabled.load(std::memory_order_relaxed);
-    if (ImGuiMCP::Checkbox("Enable WebSocket Client", &wsEnabled)) {
+    if (ImGuiMCP::Checkbox((g_translations.Get("EnableWebSocketConnect") + "##NetworkClientUtil").c_str(), &wsEnabled)) {
         g_websocketClientEnabled.store(wsEnabled, std::memory_order_relaxed);
         SaveHttpClientSettings();
     }
 
-    ImGuiMCP::Text("Connected WebSocket Clients");
+    ImGuiMCP::Text("%s", g_translations.Get("ConnectedClients").c_str());
 
     // for now, let's limit our checks to once per second
     auto now = std::chrono::steady_clock::now();
@@ -50,28 +52,28 @@ void __stdcall UI::Render() {
     }
 
     if (cachedTags.empty()) {
-        ImGuiMCP::TextDisabled("No active connections");
+        ImGuiMCP::TextDisabled("%s", g_translations.Get("NoClientsConnected").c_str());
     } else {
         for (const auto& tag : cachedTags) {
             ImGuiMCP::Text("%s", tag.c_str());
             ImGuiMCP::SameLine();
 
-            std::string logButtonId = "View Log##" + tag;
+            bool loggingEnabled = g_wsLog.IsEnabled(tag);
+            if (ImGuiMCP::Checkbox((g_translations.Get("EnableClientLogging") + "##" + tag + "NetworkClientUtil").c_str(),
+                                   &loggingEnabled)) {
+                g_wsLog.SetEnabled(tag, loggingEnabled);
+            }
+
+            ImGuiMCP::SameLine();
+
             bool& isOpen = openLogWindows[tag];
-            if (ImGuiMCP::Button(logButtonId.c_str())) {
+            if (ImGuiMCP::Button((g_translations.Get("ClientLoggingView") + "##" + tag + "NetworkClientUtil").c_str())) {
                 isOpen = !isOpen;
             }
 
             ImGuiMCP::SameLine();
 
-            bool loggingEnabled = g_wsLog.IsEnabled(tag);
-            std::string checkboxId = "Log##" + tag;
-            if (ImGuiMCP::Checkbox(checkboxId.c_str(), &loggingEnabled)) {
-                g_wsLog.SetEnabled(tag, loggingEnabled);
-            }
-
-            std::string buttonId = "Disconnect##" + tag;
-            if (ImGuiMCP::Button(buttonId.c_str())) {
+            if (ImGuiMCP::Button((g_translations.Get("ClientDisconnect") + "##" + tag + "##NetworkClientUtil").c_str())) {
                 g_webSocketService.Disconnect(tag);
                 lastTagRefresh = {}; // refresh now!
             }
@@ -92,12 +94,12 @@ void __stdcall UI::Render() {
 void UI::RenderHttpLogWindow() {
     auto viewport = ImGuiMCP::GetMainViewport();
     ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2{viewport->Size.x * 0.4f, viewport->Size.y * 0.4f}, ImGuiMCP::ImGuiCond_FirstUseEver);
-    ImGuiMCP::Begin("HTTP Log");
+    ImGuiMCP::Begin((g_translations.Get("HttpLogWindow") + "##NetworkClientUtil").c_str());
 
-    if (ImGuiMCP::Button("Clear")) {
+    if (ImGuiMCP::Button((g_translations.Get("ClearBtn") + "##NetworkClientUtil").c_str())) {
         g_httpLog.Clear();
     }
-    ImGuiMCP::BeginChild("LogScroll", ImGuiMCP::ImVec2(0, 0), false, ImGuiMCP::ImGuiWindowFlags_HorizontalScrollbar);
+    ImGuiMCP::BeginChild("LogScroll##NetworkClientUtil", ImGuiMCP::ImVec2(0, 0), false, ImGuiMCP::ImGuiWindowFlags_HorizontalScrollbar);
 
     auto lines = g_httpLog.GetSnapshot();
     for (const auto& line : lines) {
@@ -113,18 +115,17 @@ void UI::RenderHttpLogWindow() {
 
 void UI::RenderWebSocketLogWindow(const std::string& tag) {
     bool isOpen = openLogWindows[tag];
-    std::string windowTitle = "WS Log: " + tag;
 
     auto viewport = ImGuiMCP::GetMainViewport();
     ImGuiMCP::SetNextWindowSize(ImGuiMCP::ImVec2{viewport->Size.x * 0.4f, viewport->Size.y * 0.4f}, ImGuiMCP::ImGuiCond_FirstUseEver);
-    ImGuiMCP::Begin(windowTitle.c_str(), &isOpen);
+    ImGuiMCP::Begin((g_translations.Get("ClientLogWindow") + tag + "##NetworkClientUtil").c_str(), &isOpen);
 
-    if (ImGuiMCP::Button("Clear")) {
+    if (ImGuiMCP::Button((g_translations.Get("ClearBtn") + "##NetworkClientUtil").c_str())) {
         g_wsLog.Clear(tag);
     }
 
     ImGuiMCP::Separator();
-    ImGuiMCP::BeginChild("LogScroll", ImGuiMCP::ImVec2(0, 0), false, ImGuiMCP::ImGuiWindowFlags_HorizontalScrollbar);
+    ImGuiMCP::BeginChild("LogScroll##NetworkClientUtil", ImGuiMCP::ImVec2(0, 0), false, ImGuiMCP::ImGuiWindowFlags_HorizontalScrollbar);
 
     auto lines = g_wsLog.GetSnapshot(tag);
     for (const auto& line : lines) {
@@ -143,10 +144,10 @@ void UI::RenderWebSocketLogWindow(const std::string& tag) {
 
 void UI::RegisterMenu() {
     if (!SKSEMenuFramework::IsInstalled()) {
-        logger::warn("SKSE Menu Framework not installed — settings menu unavailable");
+        logger::warn("SKSE Menu Framework not installed");
         return;
     }
 
-    SKSEMenuFramework::SetSection("Network Client Util");
-    SKSEMenuFramework::AddSectionItem("Settings", UI::Render);
+    SKSEMenuFramework::SetSection(g_translations.Get("ModName"));
+    SKSEMenuFramework::AddSectionItem(g_translations.Get("SettingsSection"), UI::Render);
 }

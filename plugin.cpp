@@ -5,6 +5,7 @@
 #include <atomic>;
 #include "SimpleIni.h"
 #include "UI.h"
+#include "translation.h"
 
 inline std::atomic<bool> g_frameworkActive{true};
 inline std::thread g_tickThread;
@@ -65,6 +66,7 @@ void OnMessage(SKSE::MessagingInterface::Message* message) {
     switch (message->type) {
         case SKSE::MessagingInterface::kDataLoaded:
             LoadClientSettings();
+            g_translations.Load();
             logger::info("Initializing IXWebSocket.");
             g_httpService.Init();
             logger::info("Start checking response queue.");

@@ -9,7 +9,7 @@
 inline std::atomic<bool> g_httpClientEnabled{true};
 inline std::atomic<bool> g_websocketClientEnabled{true};
 inline std::atomic<bool> g_httpLoggingEnabled { false };
-inline constexpr const char* iniPath = "Data/SKSE/Plugins/NetworkClientUtil.ini";
+inline constexpr const char* iniPath = "Data/SKSE/Plugins/NetworkClientUtil/NetworkClientUtil.ini";
 
 // this was originally a .cpp file, but it turns out that not following proper .h/.cpp patterns
 // can cause issues as you add more files to the project. This is now a header
@@ -327,7 +327,7 @@ private:
         HttpResult result;
         result.requestTag = tag;
         result.statusCode = -200;
-        result.body = "{\"error\": \"HTTP client is disabled by the player\"}";
+        result.body = "[ERROR] HTTP client is disabled by the player";
         g_httpResults.Push(std::move(result));
 
         return false;
