@@ -12,27 +12,7 @@ inline std::atomic<bool> g_httpLoggingEnabled { false };
 inline constexpr const char* iniPath = "Data/SKSE/Plugins/NetworkClientUtil.ini";
 
 // this was originally a .cpp file, but it turns out that not following proper .h/.cpp patterns
-// can cause issues as you add more files to the project. This is now a header, and I had to mark 
-// 'UrlEncode' as inline to prevent linker issues
-
-inline std::string UrlEncode(const std::string& value) {
-    std::ostringstream escaped;
-    escaped.fill('0');
-    escaped << std::hex;
-
-    for (unsigned char c : value) {
-        // Unreserved characters per RFC
-        if (std::isalnum(c) || c == '-') {
-            escaped << c;
-        } else if (c == ' ') {
-            escaped << "%20";
-        } else {
-            escaped << '%' << std::setw(2) << std::uppercase << static_cast<int>(c) << std::nouppercase;
-        }
-    }
-
-    return escaped.str();
-}
+// can cause issues as you add more files to the project. This is now a header
 
 struct HttpResult {
     std::string requestTag; // ID provided by the caller
@@ -169,6 +149,10 @@ public:
         _client = std::make_unique<ix::HttpClient>(true); // we only need 1 instance of our client. Set to true to enable async
     }
 
+    // I was digging through the IXWebSocket code and saw it had its own urlEncode function!
+    // Now I can remove my own variant
+    std::string UrlEncode(const std::string& value) { return _client->urlEncode(value); }
+
     void GetAsync(const std::string& url, const std::string& tag, const std::vector<std::string>& headers) { 
         if (!CheckClientEnabled(tag)) {
             return;
@@ -217,7 +201,7 @@ public:
             }
 
             fullUrl += (first ? "?" : "&");
-            fullUrl += UrlEncode(key) + "=" + UrlEncode(value);
+            fullUrl += _client->urlEncode(key) + "=" + _client->urlEncode(value);
             first = false;
         }
         
@@ -359,7 +343,7 @@ public:
             HttpResult result;
             result.requestTag = tag;
             result.statusCode = -200;
-            result.body = "{\"error\": \"WebSocket client is disabled by the player\"}";
+            result.body = "[ERROR] WebSocket client is disabled by the player";
             g_httpResults.Push(std::move(result));
             return;
         }
@@ -411,7 +395,7 @@ public:
                     HttpResult result;
                     result.requestTag = tag;
                     result.statusCode = 200;  // return the same success code as the http client for easy checks
-                    result.body = msg->str;   // this is the JSON response that you get
+                    result.body = msg->str;   // this is the actual response that you get
                     g_httpResults.Push(std::move(result));
                     break;
                 }
@@ -423,16 +407,30 @@ public:
                     //logger::trace("Pong received from {}", tag);
                     g_wsLog.Add(tag, "[PONG]");
                     break;
-                case ix::WebSocketMessageType::Close:
-                    logger::warn("WebSocket closed: {} (code {})", tag, msg->closeInfo.code);
+                case ix::WebSocketMessageType::Close: {
+                    logger::warn("WebSocket closed: {} (code {})\n{}", tag, msg->closeInfo.code, msg->closeInfo.reason);
                     SetConnected(tag, false);
-                    g_wsLog.Add(tag, "[CLOSE] code " + std::to_string(msg->closeInfo.code));
+                    g_wsLog.Add(tag, "[CLOSE] code " + std::to_string(msg->closeInfo.code) + "\n" + msg->closeInfo.reason);
+
+                    HttpResult result;
+                    result.requestTag = tag;
+                    result.statusCode = msg->closeInfo.code;
+                    result.body = "[CLOSE] " + msg->closeInfo.reason;
+                    g_httpResults.Push(std::move(result));
                     break;
-                case ::ix::WebSocketMessageType::Error:
+                }
+                case ::ix::WebSocketMessageType::Error: {
                     logger::error("WebSocket error on {}: {}", tag, msg->errorInfo.reason);
                     SetConnected(tag, false);
                     g_wsLog.Add(tag, "[ERROR] " + msg->errorInfo.reason);
+
+                    HttpResult result;
+                    result.requestTag = tag;
+                    result.statusCode = msg->errorInfo.http_status;
+                    result.body = "[ERROR] " + msg->errorInfo.reason;
+                    g_httpResults.Push(std::move(result));
                     break;
+                }
             }
         });
 

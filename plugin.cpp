@@ -30,7 +30,7 @@ void LoadClientSettings() {
 
 int GetPluginVersion(RE::StaticFunctionTag*) { return 1; }
 
-std::string UrlEncodeString(RE::StaticFunctionTag*, std::string url) { return UrlEncode(url); }
+std::string UrlEncodeString(RE::StaticFunctionTag*, std::string url) { return g_httpService.UrlEncode(url); }
 
 // HTTP Client Functions
 void HttpGet(RE::StaticFunctionTag*, std::string url, std::string tag, std::vector<std::string> headers) { g_httpService.GetAsync(url, tag, headers); }
