@@ -13,7 +13,7 @@ void SaveHttpClientSettings() {
     ini.SetBoolValue("HttpClient", "bEnabled", g_httpClientEnabled.load(std::memory_order_relaxed));
     ini.SetBoolValue("WebSocketClient", "bEnabled", g_websocketClientEnabled.load(std::memory_order_relaxed));
 
-    SI_Error rc = ini.SaveFile("Data/SKSE/Plugins/ixwebsocket_skse.ini");
+    SI_Error rc = ini.SaveFile(iniPath);
     if (rc < 0) {
         logger::warn("Failed to save ixwebsocket_skse.ini");
     }
