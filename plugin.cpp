@@ -34,12 +34,14 @@ int GetPluginVersion(RE::StaticFunctionTag*) { return 1; }
 std::string UrlEncodeString(RE::StaticFunctionTag*, std::string url) { return g_httpService.UrlEncode(url); }
 
 // HTTP Client Functions
+// GET
 void HttpGet(RE::StaticFunctionTag*, std::string url, std::string tag, std::vector<std::string> headers) { g_httpService.GetAsync(url, tag, headers); }
 void HttpGetWithParams(RE::StaticFunctionTag*, std::string url, std::vector<std::string> fields, std::string tag,
     std::vector<std::string> headers) {
     g_httpService.GetWithParams(url, fields, tag, headers);
 }
 
+// POST
 void HttpPost(RE::StaticFunctionTag*, std::string url, std::string jsonBody, std::string tag,
               std::vector<std::string> headers) {
     g_httpService.PostAsync(url, jsonBody, tag, headers);
@@ -47,6 +49,35 @@ void HttpPost(RE::StaticFunctionTag*, std::string url, std::string jsonBody, std
 void HttpPostWithParams(RE::StaticFunctionTag*, std::string url, std::vector<std::string> fields, std::string tag,
     std::vector<std::string> headers) {
     g_httpService.PostParamsAsync(url, fields, tag, headers);
+}
+
+// PUT
+void HttpPut(RE::StaticFunctionTag*, std::string url, std::string jsonBody, std::string tag,
+              std::vector<std::string> headers) {
+    g_httpService.PutAsync(url, jsonBody, tag, headers);
+}
+void HttpPutWithParams(RE::StaticFunctionTag*, std::string url, std::vector<std::string> fields, std::string tag,
+                        std::vector<std::string> headers) {
+    g_httpService.PutParamsAsync(url, fields, tag, headers);
+}
+
+// PATCH
+void HttpPatch(RE::StaticFunctionTag*, std::string url, std::string jsonBody, std::string tag,
+              std::vector<std::string> headers) {
+    g_httpService.PatchAsync(url, jsonBody, tag, headers);
+}
+void HttpPatchWithParams(RE::StaticFunctionTag*, std::string url, std::vector<std::string> fields, std::string tag,
+                        std::vector<std::string> headers) {
+    g_httpService.PatchParamsAsync(url, fields, tag, headers);
+}
+
+// DELETE
+void HttpDelete(RE::StaticFunctionTag*, std::string url, std::string tag, std::vector<std::string> headers) {
+    g_httpService.DeleteAsync(url, tag, headers);
+}
+void HttpDeleteWithParams(RE::StaticFunctionTag*, std::string url, std::vector<std::string> fields, std::string tag,
+                       std::vector<std::string> headers) {
+    g_httpService.DeleteWithParams(url, fields, tag, headers);
 }
 
 // WebSocket Client Functions
@@ -110,6 +141,12 @@ bool PapyrusFunctions(RE::BSScript::IVirtualMachine* vm) {
     vm->RegisterFunction("GetWithParams", "NCU_Http", HttpGetWithParams);
     vm->RegisterFunction("Post", "NCU_Http", HttpPost);
     vm->RegisterFunction("PostWithParams", "NCU_Http", HttpPostWithParams);
+    vm->RegisterFunction("Put", "NCU_Http", HttpPut);
+    vm->RegisterFunction("PutWithParams", "NCU_Http", HttpPutWithParams);
+    vm->RegisterFunction("Patch", "NCU_Http", HttpPatch);
+    vm->RegisterFunction("PatchWithParams", "NCU_Http", HttpPatchWithParams);
+    vm->RegisterFunction("Delete", "NCU_Http", HttpDelete);
+    vm->RegisterFunction("DeleteWithParams", "NCU_Http", HttpDeleteWithParams);
     vm->RegisterFunction("Connect", "NCU_Ws", ConnectWebSocket);
     vm->RegisterFunction("Disconnect", "NCU_Ws", DisconnectWebSocket);
     vm->RegisterFunction("SendMessage", "NCU_Ws", SendWebSocketMessage);

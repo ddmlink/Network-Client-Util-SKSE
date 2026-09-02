@@ -315,6 +315,260 @@ public:
         });
     }
 
+    void PutAsync(const std::string& url, const std::string& jsonBody, const std::string& tag, std::vector<std::string>& headers) {
+        if (!CheckClientEnabled(tag)) {
+            return;
+        }
+
+        auto args = _client->createRequest(url, ix::HttpClient::kPut);
+        args->connectTimeout = 5;
+        args->transferTimeout = 10;
+
+        args->extraHeaders["Content-Type"] = "application/json";  // default JSON headers
+
+        for (const auto& line : headers) {
+            std::string key, value;
+            if (ParseHeaderLine(line, key, value)) {
+                args->extraHeaders[key] = value;  // this will allow Content-Type to be overridden if included
+            } else {
+                logger::warn("Skipping malformed header line: '{}'", line);
+            }
+        }
+
+        args->body = jsonBody;
+
+        g_httpLog.Add("[PUT] " + url + " tag='" + tag + "' body=" + jsonBody);
+
+        _client->performRequest(args, [tag, url](const ix::HttpResponsePtr& response) {
+            HttpResult result;
+            result.requestTag = tag;
+            result.statusCode = response ? response->statusCode : 0;
+            result.body = response ? response->body : "";
+
+            // logger::info("POST result for '{}': status={}, body='{}'", tag, result.statusCode, result.body);
+            g_httpLog.Add("[RESPONSE] " + url + " tag='" + tag + "' status=" + std::to_string(result.statusCode) +
+                          " body=" + result.body);
+
+            g_httpResults.Push(std::move(result));
+        });
+    }
+
+    void PutParamsAsync(const std::string& url, const std::vector<std::string>& fields, const std::string& tag, const std::vector<std::string>& headers) {
+        if (!CheckClientEnabled(tag)) {
+            return;
+        }
+
+        auto args = _client->createRequest(url, ix::HttpClient::kPut);
+        args->connectTimeout = 5;
+        args->transferTimeout = 10;
+        ix::HttpParameters params;
+
+        args->extraHeaders["Content-Type"] = "application/x-www-form-urlencoded";  // default url-encoded headers
+
+        for (const auto& line : fields) {
+            std::string key, value;
+
+            if (ParseHeaderLine(line, key, value)) {
+                params[key] = value;
+            } else {
+                logger::warn("Skipping malformed form field: '{}'", line);
+            }
+        }
+
+        args->body = _client->serializeHttpParameters(params);
+
+        g_httpLog.Add("[PUT] " + url + " tag='" + tag + "' body=" + args->body);
+
+        for (const auto& line : headers) {
+            std::string key, value;
+            if (ParseHeaderLine(line, key, value)) {
+                args->extraHeaders[key] =
+                    value;  // once again, this will allow Content-Type to be overridden if included
+            } else {
+                logger::warn("Skipping malformed header line: '{}'", line);
+            }
+        }
+
+        _client->performRequest(args, [tag, url](const ix::HttpResponsePtr& response) {
+            HttpResult result;
+            result.requestTag = tag;
+            result.statusCode = response ? response->statusCode : 0;
+            result.body = response ? response->body : "";
+
+            g_httpLog.Add("[RESPONSE] " + url + " tag='" + tag + "' status=" + std::to_string(result.statusCode) +
+                          " body=" + result.body);
+
+            g_httpResults.Push(std::move(result));
+        });
+    }
+
+    void PatchAsync(const std::string& url, const std::string& jsonBody, const std::string& tag, std::vector<std::string>& headers) {
+        if (!CheckClientEnabled(tag)) {
+            return;
+        }
+
+        auto args = _client->createRequest(url, ix::HttpClient::kPatch);
+        args->connectTimeout = 5;
+        args->transferTimeout = 10;
+
+        args->extraHeaders["Content-Type"] = "application/json";  // default JSON headers
+
+        for (const auto& line : headers) {
+            std::string key, value;
+            if (ParseHeaderLine(line, key, value)) {
+                args->extraHeaders[key] = value;  // this will allow Content-Type to be overridden if included
+            } else {
+                logger::warn("Skipping malformed header line: '{}'", line);
+            }
+        }
+
+        args->body = jsonBody;
+
+        g_httpLog.Add("[PATCH] " + url + " tag='" + tag + "' body=" + jsonBody);
+
+        _client->performRequest(args, [tag, url](const ix::HttpResponsePtr& response) {
+            HttpResult result;
+            result.requestTag = tag;
+            result.statusCode = response ? response->statusCode : 0;
+            result.body = response ? response->body : "";
+
+            // logger::info("POST result for '{}': status={}, body='{}'", tag, result.statusCode, result.body);
+            g_httpLog.Add("[RESPONSE] " + url + " tag='" + tag + "' status=" + std::to_string(result.statusCode) +
+                          " body=" + result.body);
+
+            g_httpResults.Push(std::move(result));
+        });
+    }
+
+    void PatchParamsAsync(const std::string& url, const std::vector<std::string>& fields, const std::string& tag, const std::vector<std::string>& headers) {
+        if (!CheckClientEnabled(tag)) {
+            return;
+        }
+
+        auto args = _client->createRequest(url, ix::HttpClient::kPatch);
+        args->connectTimeout = 5;
+        args->transferTimeout = 10;
+        ix::HttpParameters params;
+
+        args->extraHeaders["Content-Type"] = "application/x-www-form-urlencoded";  // default url-encoded headers
+
+        for (const auto& line : fields) {
+            std::string key, value;
+
+            if (ParseHeaderLine(line, key, value)) {
+                params[key] = value;
+            } else {
+                logger::warn("Skipping malformed form field: '{}'", line);
+            }
+        }
+
+        args->body = _client->serializeHttpParameters(params);
+
+        g_httpLog.Add("[PATCH] " + url + " tag='" + tag + "' body=" + args->body);
+
+        for (const auto& line : headers) {
+            std::string key, value;
+            if (ParseHeaderLine(line, key, value)) {
+                args->extraHeaders[key] =
+                    value;  // once again, this will allow Content-Type to be overridden if included
+            } else {
+                logger::warn("Skipping malformed header line: '{}'", line);
+            }
+        }
+
+        _client->performRequest(args, [tag, url](const ix::HttpResponsePtr& response) {
+            HttpResult result;
+            result.requestTag = tag;
+            result.statusCode = response ? response->statusCode : 0;
+            result.body = response ? response->body : "";
+
+            g_httpLog.Add("[RESPONSE] " + url + " tag='" + tag + "' status=" + std::to_string(result.statusCode) +
+                          " body=" + result.body);
+
+            g_httpResults.Push(std::move(result));
+        });
+    }
+
+    void DeleteAsync(const std::string& url, const std::string& tag, const std::vector<std::string>& headers) {
+        if (!CheckClientEnabled(tag)) {
+            return;
+        }
+
+        auto args = _client->createRequest(url, ix::HttpClient::kDelete);
+        args->connectTimeout = 5;
+        args->transferTimeout = 10;
+
+        for (const auto& line : headers) {
+            std::string key, value;
+            if (ParseHeaderLine(line, key, value)) {
+                args->extraHeaders[key] = value;
+            } else {
+                logger::warn("Skipping malformed header: '{}'", line);
+            }
+        }
+
+        g_httpLog.Add("[DELETE] " + url + " tag='" + tag + "'");
+
+        _client->performRequest(args, [tag, url](const ix::HttpResponsePtr& response) {
+            HttpResult result;
+            result.requestTag = tag;
+            result.statusCode = response ? response->statusCode : 0;
+            result.body = response ? response->body : "";
+
+            g_httpLog.Add("[RESPONSE] " + url + " tag='" + tag + "' status=" + std::to_string(result.statusCode) +
+                          " body=" + result.body);
+            g_httpResults.Push(std::move(result));
+        });
+    }
+
+    void DeleteWithParams(const std::string& url, const std::vector<std::string>& fields, const std::string& tag, const std::vector<std::string>& headers) {
+        if (!CheckClientEnabled(tag)) {
+            return;
+        }
+
+        std::string fullUrl = url;
+        bool first = true;
+
+        for (const auto& line : fields) {
+            std::string key, value;
+
+            if (!ParseHeaderLine(line, key, value)) {
+                logger::warn("Skipping malformed query field: '{}'", line);
+                continue;
+            }
+
+            fullUrl += (first ? "?" : "&");
+            fullUrl += _client->urlEncode(key) + "=" + _client->urlEncode(value);
+            first = false;
+        }
+
+        auto args = _client->createRequest(fullUrl, ix::HttpClient::kDelete);
+        args->connectTimeout = 5;
+        args->transferTimeout = 10;
+
+        for (const auto& line : headers) {
+            std::string key, value;
+            if (ParseHeaderLine(line, key, value)) {
+                args->extraHeaders[key] = value;
+            } else {
+                logger::warn("Skipping malformed header: '{}'", line);
+            }
+        }
+
+        g_httpLog.Add("[DELETE] " + url + " tag='" + tag + "'");
+
+        _client->performRequest(args, [tag, url](const ix::HttpResponsePtr& response) {
+            HttpResult result;
+            result.requestTag = tag;
+            result.statusCode = response ? response->statusCode : 0;
+            result.body = response ? response->body : "";
+
+            g_httpLog.Add("[RESPONSE] " + url + " tag='" + tag + "' status=" + std::to_string(result.statusCode) +
+                          " body=" + result.body);
+            g_httpResults.Push(std::move(result));
+        });
+    }
+
 private:
     std::unique_ptr<ix::HttpClient> _client;
 
