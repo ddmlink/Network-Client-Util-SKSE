@@ -40,7 +40,10 @@ FetchContent_MakeAvailable(ixwebsocket)
 find_package(imgui CONFIG REQUIRED)
 
 # Setup your SKSE plugin as an SKSE plugin! 
-find_package(CommonLibSSE CONFIG REQUIRED)
+add_subdirectory(lib/commonlibsse-ng)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/commonlibsse-ng/cmake")
+include(CommonLibSSE)
+#add_commonlibsse_plugin(${PROJECT_NAME} SOURCES ${headers} ${sources})
 add_commonlibsse_plugin(${PROJECT_NAME} SOURCES plugin.cpp) # <--- specifies plugin.cpp
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23) # <--- use C++23 standard
 target_precompile_headers(${PROJECT_NAME} PRIVATE PCH.h) # <--- PCH.h is required!

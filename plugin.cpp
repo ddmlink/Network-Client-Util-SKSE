@@ -92,6 +92,7 @@ void UpdateWebSocketFilters(RE::StaticFunctionTag*, std::string tag, std::vector
 }
 
 void StartTicking();
+void StopTicking();
 
 void OnMessage(SKSE::MessagingInterface::Message* message) { 
     switch (message->type) {
@@ -134,6 +135,13 @@ void Tick() {
 void StartTicking() { 
     g_frameworkActive.store(true, std::memory_order_relaxed);
     g_tickThread = std::thread(Tick);
+}
+
+void StopTicking() {
+    g_frameworkActive.store(false, std::memory_order_relaxed);
+    if (g_tickThread.joinable()) {
+        g_tickThread.join();
+    }
 }
 
 bool PapyrusFunctions(RE::BSScript::IVirtualMachine* vm) { 
@@ -179,6 +187,13 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     if (ul_reason_for_call == DLL_PROCESS_DETACH) {
+        StopTicking(); // abort() error is triggered on game exit if we don't stop
+
+        // just in case, let's disconnect all clients
+        for (const auto& tag : g_webSocketService.GetConnectedTags()) {
+            g_webSocketService.Disconnect(tag);
+        }
+
         ix::uninitNetSystem(); // required to free up network resources
     }
 

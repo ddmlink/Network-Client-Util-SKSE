@@ -3,6 +3,6 @@
     "name": "hello-world",
     "version-string": "0.0.1",
     "dependencies": [
-        "commonlibsse-ng", "zlib", "openssl", "imgui"
+        "zlib", "openssl", "imgui", "fmt", "rapidcsv", "spdlog", "xbyak", "catch2", "directxmath", "directxtk", "nlohmann-json", "toml11"
     ]
 }
